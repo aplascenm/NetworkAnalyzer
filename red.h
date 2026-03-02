@@ -63,7 +63,7 @@ int get()
 							 errbuf			// error buffer
 							 )) == NULL)
 	{
-		fprintf(stderr,"\nUnable to open the adapter. %s is not supported by WinPcap\n",d->name);
+		fprintf(stderr,"\nUnable to open the adapter. %s is not supported by Pcap\n",d->name);
 		/* Free the device list */
 		pcap_freealldevs(alldevs);
 		return -1;
