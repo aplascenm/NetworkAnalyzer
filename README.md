@@ -37,10 +37,10 @@ On Ubuntu/Debian systems:
 ```bash
 sudo apt update
 sudo apt install libpcap-dev
-
+```
 ## Running the program
 ```bash
-sudo g++ main.cpp -lpcap
+g++ main.cpp -lpcap
 sudo ./a.out
 ```
 The program then will show you a list of network adapters. Select the one you want to use to capture packages.
