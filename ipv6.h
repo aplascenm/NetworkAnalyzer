@@ -15,145 +15,190 @@ void diripv6(char *c)
 
 }
 
-void versionipv6(char *c)
+void versionipv6(char *bitString)
 {
-    string s;
-    stringstream ss, ss2;
-    int n;
-    char *cc;
-    for(int i=0; i<4; i++)
-    {
-        ss<<c[i];
-    }
-    s=ss.str();
-    n=strtoull(s.c_str(), &cc, 2);
-    cout<<"Version: "<<n<<" ("<<s<<")"<<" -> IPV6";
-}
-void trafficClass(char *c, char *c2)
-{
-    string s,s2;
-    stringstream ss, ss2;
-    int n, n2;
-    char *cc;
-    for(int i=4; i<8; i++)
-    {
-        ss<<c[i];
-    }
-    s=ss.str();
-    n=strtoull(s.c_str(), &cc, 2);
+    string binaryPart;
+    stringstream versionStream;
+    int versionValue;
+    char *endPointer;
 
     for(int i=0; i<4; i++)
     {
-        ss2<<c2[i];
+        versionStream<<bitString[i];
     }
-    s2=ss2.str();
-    n2=strtoull(s.c_str(), &cc, 2);
-    printf("\nTraffic Class: 0x%02x%02x",n, n2);
+
+    binaryPart=versionStream.str();
+    versionValue=strtoull(binaryPart.c_str(), &endPointer, 2);
+    
+    cout<<"Version: "<<versionValue<<" ("<<binaryPart<<")"<<" -> IPV6";
 }
-void flowLabel(char *c, char *c2, char *c3)
+
+void trafficClass(char *firstByteBits, char *secondByteBits)
 {
-    string s,z;
-    stringstream ss, ss2, ss3,zz;
-    unsigned long int n;
-    char *cc;
+    string firstPartBinary,secondPartBinary;
+    stringstream firstStream, secondStream;
+    int n, n2;
+    char *endPointer;
+
     for(int i=4; i<8; i++)
     {
-        ss<<c[i];
+        firstStream<<firstByteBits[i];
     }
-    s=ss.str();
+
+    firstPartBinary=firstStream.str();
+    n=strtoull(firstPartBinary.c_str(), &endPointer, 2);
+
+    for(int i=0; i<4; i++)
+    {
+        secondStream<<secondByteBits[i];
+    }
+
+    secondPartBinary=secondStream.str();
+    n2=strtoull(firstPartBinary.c_str(), &endPointer, 2);
+
+    printf("\nTraffic Class: 0x%02x%02x",n, n2);
+}
+
+void flowLabel(char *firstByteBits, char *secondByteBits, char *thirdByteBits)
+{
+    string binarySegment,completeBinary;
+    stringstream firstStream, secondStream, thirdStream, combinedStream;
+    unsigned long int flowLabelValue;
+    char *endPointer;
+
+    for(int i=4; i<8; i++)
+    {
+        firstStream<<firstByteBits[i];
+    }
+
+    binarySegment=firstStream.str();
     ///n=strtoull(s.c_str(), &cc, 2);
-    zz<<s;
+    combinedStream<<binarySegment;
+
     for(int i=0; i<8; i++)
     {
-        ss2<<c2[i];
+        secondStream<<secondByteBits[i];
     }
-    s=ss2.str();
-    zz<<s;
+
+    binarySegment=secondStream.str();
+    combinedStream<<binarySegment;
     ///n=strtoull(s.c_str(), &cc, 2);
+
     for(int i=0; i<8; i++)
     {
-        ss3<<c3[i];
+        thirdStream<<thirdByteBits[i];
     }
-    s=ss3.str();
-    zz<<s;
-    z=zz.str();
-    n=strtoull(z.c_str(), &cc, 2);
-    cout<<endl<<"Flow Label: "<<n;
+
+    binarySegment=thirdStream.str();
+    combinedStream<<binarySegment;
+
+    completeBinary=combinedStream.str();
+    flowLabelValue=strtoull(completeBinary.c_str(), &endPointer, 2);
+    
+    cout<<endl<<"Flow Label: "<<flowLabelValue;
 }
 
 void ipv6(const struct pcap_pkthdr *header, const u_char *buffer)
 {
-    int tam;
-    unsigned char cb;
-    stringstream ss;
-    string s;
+    //int tam;
+    unsigned char currentByte;
+    stringstream packetStream;
+    string packetData;
+
     for(unsigned int j=0; j<header->len; j++)
     {
-        ss<<buffer[j];
+        packetStream<<buffer[j];
     }
-    s=ss.str();
+
+    packetData=packetStream.str();
+
     cout<<endl<<"                IPV6                 "<<endl;
+    
     char *bin, *bin2, *bin3;
+    
     ///-------------version---------------------
-    cb=s[14];
-    bin=chartobin(cb);
+    currentByte=packetData[14];
+    bin=chartobin(currentByte);
     versionipv6(bin);
+    
     ///----------Traffic class-------------------
-    cb=s[14];
-    bin=chartobin(cb);
-    cb=s[15];
-    bin2=chartobin(cb);
+    currentByte=packetData[14];
+    bin=chartobin(currentByte);
+
+    currentByte=packetData[15];
+    bin2=chartobin(currentByte);
+
     trafficClass(bin, bin2);
+    
     ///----------Flow Label-----------------------
-    cb=s[15];
-    bin=chartobin(cb);
-    cb=s[16];
-    bin2=chartobin(cb);
-    cb=s[17];
-    bin3=chartobin(cb);
+    currentByte=packetData[15];
+    bin=chartobin(currentByte);
+
+    currentByte=packetData[16];
+    bin2=chartobin(currentByte);
+
+    currentByte=packetData[17];
+    bin3=chartobin(currentByte);
+
     flowLabel(bin, bin2, bin3);
+    
     ///----------Payload Lenght-------------------
-    char *cc;
-    long int n, t;
-    stringstream s1,z;
-    string s2;
-    cb=s[18];
-    bin=chartobin(cb);
-    s1<<bin;
-    cb=s[19];
-    bin=chartobin(cb);
-    s1<<bin;
-    s2=s1.str();
-    n=strtoull(s2.c_str(), &cc, 2);
-    t=n-40;
-    cout<<endl<<"Payload Lenght: "<<n;
+    char *endPointer;
+    long int totalLength, dataLength;
+    stringstream lengthStream;
+    string binaryLength;
+
+    currentByte=packetData[18];
+    bin=chartobin(currentByte);
+    lengthStream<<bin;
+
+    currentByte=packetData[19];
+    bin=chartobin(currentByte);
+    lengthStream<<bin;
+
+    binaryLength=lengthStream.str();
+    totalLength=strtoull(binaryLength.c_str(), &endPointer, 2);
+    
+    dataLength=totalLength-40;
+    
+    cout<<endl<<"Payload Lenght: "<<totalLength;
+    
     ///----------Next Header-------------------
-    int num;
-    stringstream ss1;
-    cb=s[20];
-    ss1<<(unsigned int)cb;
-    s2=ss1.str();
-    num=verificarIPT6(s2);
+    int nextHeaderValue;
+    stringstream protocolStream;
+
+    currentByte=packetData[20];
+    protocolStream<<(unsigned int)currentByte;
+
+    binaryLength=protocolStream.str();
+    nextHeaderValue=verificarIPT6(binaryLength);
+
     ///----------Hop Limit---------------------
-    cb=s[21];
-    cout<<endl<<"Hop Limit: "<<(unsigned int)cb;
+    currentByte=packetData[21];
+    cout<<endl<<"Hop Limit: "<<(unsigned int)currentByte;
+
     ///----------Source address----------------
     cout<<endl<<"Source Address: ";
-    int cont=0;
+
+    int groupCounter=0;
+
     for(int j=22; j<38; j++)
     {
-        cb=s[j];
-        printf("%02x", (unsigned int)cb);
-        cont++;
+        currentByte=packetData[j];
+        printf("%02x", (unsigned int)currentByte);
+
+        groupCounter++;
+
         if(j<37)
         {
-            if(cont==2)
+            if(groupCounter==2)
             {
-            cont=0;
+            groupCounter=0;
             cout<<":";
             }
         }
     }
+
     /*tam=16;
     ar.seekg (22, ios::beg);
     ar.read ((char*)ch, tam);
@@ -174,23 +219,29 @@ void ipv6(const struct pcap_pkthdr *header, const u_char *buffer)
     }
     s=sa.str();
     cout<<endl<<"Source Address: "<<s;*/
+    
     ///----------Destination address-----------
     cout<<endl<<"Destination Address: ";
-    cont=0;
+
+    groupCounter=0;
+
     for(int j=38; j<54; j++)
     {
-        cb=s[j];
-        printf("%02x", (unsigned int)cb);
-        cont++;
+        currentByte=packetData[j];
+        printf("%02x", (unsigned int)currentByte);
+
+        groupCounter++;
+
         if(j<53)
         {
-            if(cont==2)
+            if(groupCounter==2)
             {
-            cont=0;
+            groupCounter=0;
             cout<<":";
             }
         }
     }
+
     /*tam=16;
     ar.seekg (38, ios::beg);
     ar.read ((char*)ch, tam);
@@ -211,14 +262,17 @@ void ipv6(const struct pcap_pkthdr *header, const u_char *buffer)
     }
     s=sd.str();
     cout<<endl<<"Destination Address: "<<s;*/
+
     ///-----------------DATA--------------------
-    if(num==58)
+    if(nextHeaderValue==58)
     {
-        icmp6(header, buffer, t);
-    }else if(num==17)
+        icmp6(header, buffer, dataLength);
+    }
+    else if(nextHeaderValue==17)
     {
         udp(header,buffer,6);
-    }else if(num==6)
+    }
+    else if(nextHeaderValue==6)
     {
         tcp(header, buffer, 6);
     }

@@ -4,246 +4,306 @@
 #include "diccionario.h"
 
 
-void flagsdns(char *c)
+void flagsdns(char *flag_bits)
 {
-    string s;
-    stringstream ss;
-    int n;
-    char *cc;
-    if(c[0]=='0')
+    string opcode_bits;
+    stringstream opcode_stream;
+    
+    if(flag_bits[0]=='0')
     {
         cout<<endl<<"0... .... .... .... = Query";
     }else
     {
         cout<<endl<<"1... .... .... .... = Response";
     }
+    
     for(int i=1; i<5; i++)
     {
-        ss<<c[i];
+        opcode_stream<<flag_bits[i];
     }
-    s=ss.str();
+    
+    opcode_bits=opcode_stream.str();
+    
     for(int j=0; j<8; j++)
     {
-        if(s==flagsdns1[j])
+        if(opcode_bits==flagsdns1[j])
         {
             cout<<endl<<flagsdns1[j+1];
         }
     }
 
-    if(c[5]=='0')
+    if(flag_bits[5]=='0')
     {
         cout<<endl<<".... .0.. .... .... = Non-authoritative DNS answer";
-    }else
+    }
+    else
     {
         cout<<endl<<".... .1.. .... .... = Authoritative DNS answer";
     }
 
-    if(c[6]=='0')
+    if(flag_bits[6]=='0')
     {
         cout<<endl<<".... ..0. .... .... = Message not truncated";
-    }else
+    }
+    else
     {
         cout<<endl<<".... ..1. .... .... = Message truncated";
     }
 
-    if(c[7]=='0')
+    if(flag_bits[7]=='0')
     {
         cout<<endl<<".... ...0 .... .... = Non-recursive Query";
-    }else
+    }
+    else
     {
         cout<<endl<<".... ...1 .... .... = Recursive Query";
     }
 }
 
-void flagsdns2(char *c)
+void flagsdns2(char *flag_bits)
 {
-    string s;
-    stringstream ss;
-    int n;
-    char *cc;
-    if(c[0]=='0')
+    string rcode_bits;
+    stringstream rcode_stream;
+ 
+    if(flag_bits[0]=='0')
     {
         cout<<endl<<".... .... 0... .... = Recursion not available";
-    }else
+    }
+    else
     {
         cout<<endl<<".... .... 1... .... = Recursive available";
     }
 
-    if(c[2]=='0')
+    if(flag_bits[2]=='0')
     {
         cout<<endl<<".... .... .0.. .... = Authority portion was not authenticated by the server";
-    }else
+    }
+    else
     {
         cout<<endl<<".... .... .1.. .... = Authority portion was authenticated by the server";
     }
 
     for(int i=4; i<8; i++)
     {
-        ss<<c[i];
+        rcode_stream<<flag_bits[i];
     }
-    s=ss.str();
+
+    rcode_bits=rcode_stream.str();
+    
     for(int j=0; j<8; j++)
     {
-        if(s==flagsdns22[j])
+        if(rcode_bits==flagsdns22[j])
         {
             cout<<endl<<flagsdns22[j+1];
         }
     }
 }
 
-void dns(const struct pcap_pkthdr *header, const u_char *buffer, int ip, int tp)
+void dns(const struct pcap_pkthdr *header, const u_char *buffer, int ip_version, int transport_protocol)
 {
-    unsigned char cb;
-    stringstream ss;
-    string s;
+    unsigned char current_byte;
+    stringstream packet_stream;
+    string packet_string;
+
     for(unsigned int j=0; j<header->len; j++)
     {
-            ss<<buffer[j];
+            packet_stream<<buffer[j];
     }
-    s=ss.str();
+
+    packet_string=packet_stream.str();
+    
     ///
     char *bin;
-    if(ip==4)
+
+    if(ip_version==4)
     {
         cout<<endl<<endl<<"                DNS - IPV4                 "<<endl;
+        
         //Transaction ID
-        long int n;
-        stringstream z;
-        string s2;
-        char *cc;
-        cb=s[42];
-        bin=chartobin(cb);
-        z<<bin;
-        cb=s[43];
-        bin=chartobin(cb);
-        z<<bin;
-        s2=z.str();
-        n=strtoull(s2.c_str(), &cc, 2);
-        cout<<endl<<"Transaction ID: "<<n;
+        long int transaction_id;
+        stringstream binary_stream;
+        string binary_string;
+        char *end_ptr;
+        
+        current_byte=packet_string[42];
+        bin=chartobin(current_byte);
+        binary_stream<<bin;
+        
+        current_byte=packet_string[43];
+        bin=chartobin(current_byte);
+        binary_stream<<bin;
+        
+        binary_string=binary_stream.str();
+        transaction_id=strtoull(binary_string.c_str(), &end_ptr, 2);
+        
+        cout<<endl<<"Transaction ID: "<<transaction_id;
+        
         //FLAGS
         //1 byte
-        cb=s[44];
-        bin=chartobin(cb);
+        current_byte=packet_string[44];
+        bin=chartobin(current_byte);
         flagsdns(bin);
+        
         //2 Byte
-        cb=s[45];
-        bin=chartobin(cb);
+        current_byte=packet_string[45];
+        bin=chartobin(current_byte);
         flagsdns2(bin);
+        
         //Questions
-        stringstream z1;
-        cb=s[46];
-        bin=chartobin(cb);
-        z1<<bin;
-        cb=s[47];
-        bin=chartobin(cb);
-        z1<<bin;
-        s2=z1.str();
-        n=strtoull(s2.c_str(), &cc, 2);
-        cout<<endl<<"Questions: "<<n;
+        stringstream question_stream;
+        
+        current_byte=packet_string[46];
+        bin=chartobin(current_byte);
+        question_stream<<bin;
+
+        current_byte=packet_string[47];
+        bin=chartobin(current_byte);
+        question_stream<<bin;
+
+        binary_string=question_stream.str();
+        transaction_id=strtoull(binary_string.c_str(), &end_ptr, 2);
+        cout<<endl<<"Questions: "<<transaction_id;
+
         //Answers
-        stringstream z2;
-        cb=s[48];
-        bin=chartobin(cb);
-        z2<<bin;
-        cb=s[49];
-        bin=chartobin(cb);
-        z2<<bin;
-        s2=z2.str();
-        n=strtoull(s2.c_str(), &cc, 2);
-        cout<<endl<<"Answers RRs: "<<n;
+        stringstream answer_stream;
+        
+        current_byte=packet_string[48];
+        bin=chartobin(current_byte);
+        answer_stream<<bin;
+
+        current_byte=packet_string[49];
+        bin=chartobin(current_byte);
+        answer_stream<<bin;
+
+        binary_string=answer_stream.str();
+        transaction_id=strtoull(binary_string.c_str(), &end_ptr, 2);
+        cout<<endl<<"Answers RRs: "<<transaction_id;
+        
         //Authority
-        stringstream z3;
-        cb=s[50];
-        bin=chartobin(cb);
-        z3<<bin;
-        cb=s[51];
-        bin=chartobin(cb);
-        z3<<bin;
-        s2=z3.str();
-        n=strtoull(s2.c_str(), &cc, 2);
-        cout<<endl<<"Authority RRs: "<<n;
+        stringstream authority_stream;
+
+        current_byte=packet_string[50];
+        bin=chartobin(current_byte);
+        authority_stream<<bin;
+
+        current_byte=packet_string[51];
+        bin=chartobin(current_byte);
+        authority_stream<<bin;
+
+        binary_string=authority_stream.str();
+        transaction_id=strtoull(binary_string.c_str(), &end_ptr, 2);
+        cout<<endl<<"Authority RRs: "<<transaction_id;
+        
         //Additional
-        stringstream z4;
-        cb=s[52];
-        bin=chartobin(cb);
-        z4<<bin;
-        cb=s[53];
-        bin=chartobin(cb);
-        z4<<bin;
-        s2=z4.str();
-        n=strtoull(s2.c_str(), &cc, 2);
-        cout<<endl<<"Additional RRs: "<<n;
+        stringstream additional_stream;
+
+        current_byte=packet_string[52];
+        bin=chartobin(current_byte);
+        additional_stream<<bin;
+
+        current_byte=packet_string[53];
+        bin=chartobin(current_byte);
+        additional_stream<<bin;
+
+        binary_string=additional_stream.str();
+        transaction_id=strtoull(binary_string.c_str(), &end_ptr, 2);
+        cout<<endl<<"Additional RRs: "<<transaction_id;
+
         //Query
-    }else
+    }
+    else
     {
         cout<<endl<<endl<<"                DNS - IPV6                 "<<endl;
+        
         //Transaction ID
-        long int n;
-        stringstream z;
-        string s2;
-        char *cc;
-        cb=s[62];
-        bin=chartobin(cb);
-        z<<bin;
-        cb=s[63];
-        bin=chartobin(cb);
-        z<<bin;
-        s2=z.str();
-        n=strtoull(s2.c_str(), &cc, 2);
-        cout<<endl<<"Transaction ID: "<<n;
+        long int transaction_id;
+        stringstream binary_stream;
+        string binary_string;
+        char *end_ptr;
+
+        current_byte=packet_string[62];
+        bin=chartobin(current_byte);
+        binary_stream<<bin;
+
+        current_byte=packet_string[63];
+        bin=chartobin(current_byte);
+        binary_stream<<bin;
+
+        binary_string=binary_stream.str();
+        transaction_id=strtoull(binary_string.c_str(), &end_ptr, 2);
+        
+        cout<<endl<<"Transaction ID: "<<transaction_id;
+        
         //FLAGS
         //1 byte
-        cb=s[64];
-        bin=chartobin(cb);
+        current_byte=packet_string[64];
+        bin=chartobin(current_byte);
         flagsdns(bin);
+
         //2 Byte
-        cb=s[65];
-        bin=chartobin(cb);
+        current_byte=packet_string[65];
+        bin=chartobin(current_byte);
         flagsdns2(bin);
+
         //Questions
-        stringstream z1;
-        cb=s[66];
-        bin=chartobin(cb);
-        z1<<bin;
-        cb=s[67];
-        bin=chartobin(cb);
-        z1<<bin;
-        s2=z1.str();
-        n=strtoull(s2.c_str(), &cc, 2);
-        cout<<endl<<"Questions: "<<n;
+        stringstream question_stream;
+
+        current_byte=packet_string[66];
+        bin=chartobin(current_byte);
+        question_stream<<bin;
+
+        current_byte=packet_string[67];
+        bin=chartobin(current_byte);
+        question_stream<<bin;
+
+        binary_string=question_stream.str();
+        transaction_id=strtoull(binary_string.c_str(), &end_ptr, 2);
+        cout<<endl<<"Questions: "<<transaction_id;
+
         //Answers
-        stringstream z2;
-        cb=s[68];
-        bin=chartobin(cb);
-        z2<<bin;
-        cb=s[69];
-        bin=chartobin(cb);
-        z2<<bin;
-        s2=z2.str();
-        n=strtoull(s2.c_str(), &cc, 2);
-        cout<<endl<<"Answers RRs: "<<n;
+        stringstream answer_stream;
+
+        current_byte=packet_string[68];
+        bin=chartobin(current_byte);
+        answer_stream<<bin;
+
+        current_byte=packet_string[69];
+        bin=chartobin(current_byte);
+        answer_stream<<bin;
+
+        binary_string=answer_stream.str();
+        transaction_id=strtoull(binary_string.c_str(), &end_ptr, 2);
+        cout<<endl<<"Answers RRs: "<<transaction_id;
+        
         //Authority
-        stringstream z3;
-        cb=s[70];
-        bin=chartobin(cb);
-        z3<<bin;
-        cb=s[71];
-        bin=chartobin(cb);
-        z3<<bin;
-        s2=z3.str();
-        n=strtoull(s2.c_str(), &cc, 2);
-        cout<<endl<<"Authority RRs: "<<n;
+        stringstream authority_stream;
+
+        current_byte=packet_string[70];
+        bin=chartobin(current_byte);
+        authority_stream<<bin;
+
+        current_byte=packet_string[71];
+        bin=chartobin(current_byte);
+        authority_stream<<bin;
+
+        binary_string=authority_stream.str();
+        transaction_id=strtoull(binary_string.c_str(), &end_ptr, 2);
+        cout<<endl<<"Authority RRs: "<<transaction_id;
+
         //Additional
-        stringstream z4;
-        cb=s[72];
-        bin=chartobin(cb);
-        z4<<bin;
-        cb=s[73];
-        bin=chartobin(cb);
-        z4<<bin;
-        s2=z4.str();
-        n=strtoull(s2.c_str(), &cc, 2);
-        cout<<endl<<"Additional RRs: "<<n;
+        stringstream additional_stream;
+
+        current_byte=packet_string[72];
+        bin=chartobin(current_byte);
+        additional_stream<<bin;
+
+        current_byte=packet_string[73];
+        bin=chartobin(current_byte);
+        additional_stream<<bin;
+        
+        binary_string=additional_stream.str();
+        transaction_id=strtoull(binary_string.c_str(), &end_ptr, 2);
+        cout<<endl<<"Additional RRs: "<<transaction_id;
         //Query
     }
 }

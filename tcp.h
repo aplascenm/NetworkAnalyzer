@@ -6,33 +6,41 @@
 using namespace std;
 
 
-void dataresns(char *c)
+void dataresns(char *bitString)
 {
     //Data Offset
-    string s;
-    stringstream ss, ss2;
+    string binaryPart;
+    stringstream offsetStream, reservedStream;
     int n;
-    char *cc;
+    char *endPointer;
+
     for(int i=0; i<4; i++)
     {
-        ss<<c[i];
+        offsetStream<<bitString[i];
     }
-    s=ss.str();
-    n=strtoull(s.c_str(), &cc, 2);
-    cout<<endl<<"Data offset: "<<n<<" ->"<<s<<" ("<<n*4<<")";
+
+    binaryPart=offsetStream.str();
+    n=strtoull(binaryPart.c_str(), &endPointer, 2);
+    
+    cout<<endl<<"Data offset: "<<n<<" ->"<<binaryPart<<" ("<<n*4<<")";
+    
     //Reserved
     for(int i=5; i<7; i++)
     {
-        ss2<<c[i];
+        reservedStream<<bitString[i];
     }
-    s=ss2.str();
-    n=strtoull(s.c_str(), &cc, 2);
+    
+    binaryPart=reservedStream.str();
+    n=strtoull(binaryPart.c_str(), &endPointer, 2);
+    
     cout<<endl<<"Reserved Bits: "<<n;
+    
     //Bandera NS
-    if(c[7]=='1')
+    if(bitString[7]=='1')
     {
         cout<<endl<<"Bandera NS: ON";
-    }else
+    }
+    else
     {
         cout<<endl<<"Bandera NS: OFF";
     }
@@ -54,224 +62,311 @@ void flagst(char *c)
 
 void tcp (const struct pcap_pkthdr *header, const u_char *buffer, int type)
 {
-    int tam;
-    unsigned char cb;
-    stringstream ss;
-    string s;
+    unsigned char currentByte;
+    stringstream packetStream;
+    string packetData;
+
     for(unsigned int j=0; j<header->len; j++)
     {
-        ss<<buffer[j];
+        packetStream<<buffer[j];
     }
-    s=ss.str();
+
+    packetData=packetStream.str();
+
     if(type==4)
     {
         cout<<endl<<endl<<"                TCP - IPV4                 "<<endl;
+        
         char *bin;
+        
         //Source Port
-        long int ns, nd;
-        stringstream z;
-        string ss2;
-        char *cc;
-        cb=s[34];
-        bin=chartobin(cb);
-        z<<bin;
-        cb=s[35];
-        bin=chartobin(cb);
-        z<<bin;
-        ss2=z.str();
-        ns=strtoull(ss2.c_str(), &cc, 2);
-        cout<<endl<<"Source Port: "<<ns;
+        long int sourcePort, destinationPort;
+        stringstream binaryStream;
+        string binaryData;
+        char *endPointer;
+
+        currentByte=packetData[34];
+        bin=chartobin(currentByte);
+        binaryStream<<bin;
+
+        currentByte=packetData[35];
+        bin=chartobin(currentByte);
+        binaryStream<<bin;
+
+        binaryData=binaryStream.str();
+        sourcePort=strtoull(binaryData.c_str(), &endPointer, 2);
+        
+        cout<<endl<<"Source Port: "<<sourcePort;
+        
         //Destination Port
-        stringstream z1;
-        cb=s[36];
-        bin=chartobin(cb);
-        z1<<bin;
-        cb=s[37];
-        bin=chartobin(cb);
-        z1<<bin;
-        ss2=z1.str();
-        nd=strtoull(ss2.c_str(), &cc, 2);
-        cout<<endl<<"Destination Port: "<<nd;
+        stringstream destinationStream;
+
+        currentByte=packetData[36];
+        bin=chartobin(currentByte);
+        destinationStream<<bin;
+
+        currentByte=packetData[37];
+        bin=chartobin(currentByte);
+        destinationStream<<bin;
+
+        binaryData=destinationStream.str();
+        destinationPort=strtoull(binaryData.c_str(), &endPointer, 2);
+        
+        cout<<endl<<"Destination Port: "<<destinationPort;
+        
         //Seq Number
-        long long int nn;
-        stringstream z2;
-        cb=s[38];
-        bin=chartobin(cb);
-        z2<<bin;
-        cb=s[39];
-        bin=chartobin(cb);
-        z2<<bin;
-        cb=s[40];
-        bin=chartobin(cb);
-        z2<<bin;
-        cb=s[41];
-        bin=chartobin(cb);
-        z2<<bin;
-        ss2=z2.str();
-        nn=strtoull(ss2.c_str(), &cc, 2);
-        cout<<endl<<"Seq Number: "<<nn;
+        long long int sequenceNumber;
+        stringstream sequenceStream;
+
+        currentByte=packetData[38];
+        bin=chartobin(currentByte);
+        sequenceStream<<bin;
+
+        currentByte=packetData[39];
+        bin=chartobin(currentByte);
+        sequenceStream<<bin;
+
+        currentByte=packetData[40];
+        bin=chartobin(currentByte);
+        sequenceStream<<bin;
+
+        currentByte=packetData[41];
+        bin=chartobin(currentByte);
+        sequenceStream<<bin;
+        
+        binaryData=sequenceStream.str();
+        sequenceNumber=strtoull(binaryData.c_str(), &endPointer, 2);
+        
+        cout<<endl<<"Seq Number: "<<sequenceNumber;
+        
         //Ack Number
-        stringstream z3;
-        cb=s[42];
-        bin=chartobin(cb);
-        z3<<bin;
-        cb=s[43];
-        bin=chartobin(cb);
-        z3<<bin;
-        cb=s[44];
-        bin=chartobin(cb);
-        z3<<bin;
-        cb=s[45];
-        bin=chartobin(cb);
-        z3<<bin;
-        ss2=z3.str();
-        nn=strtoull(ss2.c_str(), &cc, 2);
-        cout<<endl<<"Ack Number: "<<nn;
+        stringstream acknowledgmentStream;
+
+        currentByte=packetData[42];
+        bin=chartobin(currentByte);
+        acknowledgmentStream<<bin;
+
+        currentByte=packetData[43];
+        bin=chartobin(currentByte);
+        acknowledgmentStream<<bin;
+
+        currentByte=packetData[44];
+        bin=chartobin(currentByte);
+        acknowledgmentStream<<bin;
+
+        currentByte=packetData[45];
+        bin=chartobin(currentByte);
+        acknowledgmentStream<<bin;
+
+        binaryData=acknowledgmentStream.str();
+        sequenceNumber=strtoull(binaryData.c_str(), &endPointer, 2);
+        
+        cout<<endl<<"Ack Number: "<<sequenceNumber;
+        
         //Data Offset
-        cb=s[46];
-        bin=chartobin(cb);
+        currentByte=packetData[46];
+        bin=chartobin(currentByte);
         dataresns(bin);
+        
         //Flags
-        cb=s[47];
-        bin=chartobin(cb);
+        currentByte=packetData[47];
+        bin=chartobin(currentByte);
         flagst(bin);
+        
         //Windows Size
-        stringstream z4;
-        cb=s[48];
-        bin=chartobin(cb);
-        z4<<bin;
-        cb=s[49];
-        bin=chartobin(cb);
-        z4<<bin;
-        ss2=z4.str();
-        nn=strtoull(ss2.c_str(), &cc, 2);
-        cout<<endl<<"Windows Size: "<<nn;
+        stringstream windowStream;
+
+        currentByte=packetData[48];
+        bin=chartobin(currentByte);
+        windowStream<<bin;
+
+        currentByte=packetData[49];
+        bin=chartobin(currentByte);
+        windowStream<<bin;
+
+        binaryData=windowStream.str();
+        sequenceNumber=strtoull(binaryData.c_str(), &endPointer, 2);
+        
+        cout<<endl<<"Windows Size: "<<sequenceNumber;
+        
         //Checksum
-        stringstream z5;
-        cb=s[50];
-        z5<<hex<<setw(2)<<setfill('0')<<(unsigned int)cb;
-        cb=s[51];
-        z5<<hex<<setw(2)<<setfill('0')<<(unsigned int)cb;
-        ss2="0x"+z5.str();
-        cout<<endl<<"Checksum: "<<ss2;
+        stringstream checksumStream;
+
+        currentByte=packetData[50];
+        checksumStream<<hex<<setw(2)<<setfill('0')<<(unsigned int)currentByte;
+        
+        currentByte=packetData[51];
+        checksumStream<<hex<<setw(2)<<setfill('0')<<(unsigned int)currentByte;
+        
+        binaryData="0x"+checksumStream.str();
+
+        cout<<endl<<"Checksum: "<<binaryData;
+
         //Urgen Pointer
-        stringstream z6;
-        cb=s[52];
-        bin=chartobin(cb);
-        z6<<bin;
-        cb=s[53];
-        bin=chartobin(cb);
-        z6<<bin;
-        ss2=z6.str();
-        nn=strtoull(ss2.c_str(), &cc, 2);
-        cout<<endl<<"Urgent Pointer: "<<nn;
+        stringstream urgentStream;
+
+        currentByte=packetData[52];
+        bin=chartobin(currentByte);
+        urgentStream<<bin;
+
+        currentByte=packetData[53];
+        bin=chartobin(currentByte);
+        urgentStream<<bin;
+
+        binaryData=urgentStream.str();
+        sequenceNumber=strtoull(binaryData.c_str(), &endPointer, 2);
+        
+        cout<<endl<<"Urgent Pointer: "<<sequenceNumber;
+        
         //
-        if(ns==80||nd==80)
+        if(sourcePort==80||destinationPort==80)
         {
             http(header, buffer);
         }
-    }else
+    }
+    else
     {
         cout<<endl<<endl<<"                TCP - IPV6                 "<<endl;
         char *bin;
+        
         //Source Port
-        long int n;
-        stringstream z;
-        string ss2;
-        char *cc;
-        cb=s[54];
-        bin=chartobin(cb);
-        z<<bin;
-        cb=s[55];
-        bin=chartobin(cb);
-        z<<bin;
-        ss2=z.str();
-        n=strtoull(ss2.c_str(), &cc, 2);
-        cout<<endl<<"Source Port: "<<n;
+        long int portValue;
+        stringstream binaryStream;
+        string binaryData;
+        char *endPointer;
+
+        currentByte=packetData[54];
+        bin=chartobin(currentByte);
+        binaryStream<<bin;
+
+        currentByte=packetData[55];
+        bin=chartobin(currentByte);
+        binaryStream<<bin;
+
+        binaryData=binaryStream.str();
+        portValue=strtoull(binaryData.c_str(), &endPointer, 2);
+        
+        cout<<endl<<"Source Port: "<<portValue;
+        
         //Destination Port
-        stringstream z1;
-        cb=s[56];
-        bin=chartobin(cb);
-        z1<<bin;
-        cb=s[57];
-        bin=chartobin(cb);
-        z1<<bin;
-        ss2=z1.str();
-        n=strtoull(ss2.c_str(), &cc, 2);
-        cout<<endl<<"Destination Port: "<<n;
+        stringstream destinationStream;
+
+        currentByte=packetData[56];
+        bin=chartobin(currentByte);
+        destinationStream<<bin;
+
+        currentByte=packetData[57];
+        bin=chartobin(currentByte);
+        destinationStream<<bin;
+
+        binaryData=destinationStream.str();
+        portValue=strtoull(binaryData.c_str(), &endPointer, 2);
+        
+        cout<<endl<<"Destination Port: "<<portValue;
+        
         //Seq Number
-        long long int nn;
-        stringstream z2;
-        cb=s[58];
-        bin=chartobin(cb);
-        z2<<bin;
-        cb=s[59];
-        bin=chartobin(cb);
-        z2<<bin;
-        cb=s[60];
-        bin=chartobin(cb);
-        z2<<bin;
-        cb=s[61];
-        bin=chartobin(cb);
-        z2<<bin;
-        ss2=z2.str();
-        nn=strtoull(ss2.c_str(), &cc, 2);
-        cout<<endl<<"Seq Number: "<<nn;
+        long long int sequenceNumber;
+        stringstream sequenceStream;
+
+        currentByte=packetData[58];
+        bin=chartobin(currentByte);
+        sequenceStream<<bin;
+
+        currentByte=packetData[59];
+        bin=chartobin(currentByte);
+        sequenceStream<<bin;
+
+        currentByte=packetData[60];
+        bin=chartobin(currentByte);
+        sequenceStream<<bin;
+
+        currentByte=packetData[61];
+        bin=chartobin(currentByte);
+        sequenceStream<<bin;
+
+        binaryData=sequenceStream.str();
+        sequenceNumber=strtoull(binaryData.c_str(), &endPointer, 2);
+        
+        cout<<endl<<"Seq Number: "<<sequenceNumber;
+        
         //Ack Number
-        stringstream z3;
-        cb=s[62];
-        bin=chartobin(cb);
-        z3<<bin;
-        cb=s[63];
-        bin=chartobin(cb);
-        z3<<bin;
-        cb=s[64];
-        bin=chartobin(cb);
-        z3<<bin;
-        cb=s[65];
-        bin=chartobin(cb);
-        z3<<bin;
-        ss2=z3.str();
-        nn=strtoull(ss2.c_str(), &cc, 2);
-        cout<<endl<<"Ack Number: "<<nn;
+        stringstream acknowledgmentStream;
+
+        currentByte=packetData[62];
+        bin=chartobin(currentByte);
+        acknowledgmentStream<<bin;
+
+        currentByte=packetData[63];
+        bin=chartobin(currentByte);
+        acknowledgmentStream<<bin;
+
+        currentByte=packetData[64];
+        bin=chartobin(currentByte);
+        acknowledgmentStream<<bin;
+
+        currentByte=packetData[65];
+        bin=chartobin(currentByte);
+        acknowledgmentStream<<bin;
+
+        binaryData=acknowledgmentStream.str();
+        sequenceNumber=strtoull(binaryData.c_str(), &endPointer, 2);
+        
+        cout<<endl<<"Ack Number: "<<sequenceNumber;
+        
         //Data Offset
-        cb=s[66];
-        bin=chartobin(cb);
+        currentByte=packetData[66];
+        bin=chartobin(currentByte);
         dataresns(bin);
+        
         //Flags
-        cb=s[67];
-        bin=chartobin(cb);
+        currentByte=packetData[67];
+        bin=chartobin(currentByte);
         flagst(bin);
+        
         //Windows Size
-        stringstream z4;
-        cb=s[68];
-        bin=chartobin(cb);
-        z4<<bin;
-        cb=s[69];
-        bin=chartobin(cb);
-        z4<<bin;
-        ss2=z4.str();
-        nn=strtoull(ss2.c_str(), &cc, 2);
-        cout<<endl<<"Windows Size: "<<nn;
+        stringstream windowStream;
+
+        currentByte=packetData[68];
+        bin=chartobin(currentByte);
+        windowStream<<bin;
+
+        currentByte=packetData[69];
+        bin=chartobin(currentByte);
+        windowStream<<bin;
+
+        binaryData=windowStream.str();
+        sequenceNumber=strtoull(binaryData.c_str(), &endPointer, 2);
+        
+        cout<<endl<<"Windows Size: "<<sequenceNumber;
+        
         //Checksum
-        stringstream z5;
-        cb=s[70];
-        z5<<hex<<setw(2)<<setfill('0')<<(unsigned int)cb;
-        cb=s[71];
-        z5<<hex<<setw(2)<<setfill('0')<<(unsigned int)cb;
-        ss2="0x"+z5.str();
-        cout<<endl<<"Checksum: "<<ss2;
+        stringstream checksumStream;
+
+        currentByte=packetData[70];
+        checksumStream<<hex<<setw(2)<<setfill('0')<<(unsigned int)currentByte;
+        
+        currentByte=packetData[71];
+        checksumStream<<hex<<setw(2)<<setfill('0')<<(unsigned int)currentByte;
+        
+        binaryData="0x"+checksumStream.str();
+        
+        cout<<endl<<"Checksum: "<<binaryData;
+        
         //Urgen Pointer
-        stringstream z6;
-        cb=s[72];
-        bin=chartobin(cb);
-        z6<<bin;
-        cb=s[73];
-        bin=chartobin(cb);
-        z6<<bin;
-        ss2=z6.str();
-        nn=strtoull(ss2.c_str(), &cc, 2);
-        cout<<endl<<"Urgent Pointer: "<<nn;
+        stringstream urgentStream;
+
+        currentByte=packetData[72];
+        bin=chartobin(currentByte);
+        urgentStream<<bin;
+
+        currentByte=packetData[73];
+        bin=chartobin(currentByte);
+        urgentStream<<bin;
+
+        binaryData=urgentStream.str();
+        sequenceNumber=strtoull(binaryData.c_str(), &endPointer, 2);
+        
+        cout<<endl<<"Urgent Pointer: "<<sequenceNumber;
     }
 }
 

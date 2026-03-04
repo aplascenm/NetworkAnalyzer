@@ -6,90 +6,118 @@
 using namespace std;
 
 
-void icmp4 (const struct pcap_pkthdr *header, const u_char *buffer,int t)
+void icmp4 (const struct pcap_pkthdr *header, const u_char *buffer,int length)
 {
-    int ident;
-    int tam;
-    string s;
-    char *bin, *cc;
-    unsigned char cb;
-    stringstream ss;
+    int icmp_identifier;
+    int payload_size;
+    string packet_string;
+    char *bin, *end_ptr;
+    unsigned char current_byte;
+    stringstream packet_stream;
+
     for(unsigned int j=0; j<header->len; j++)
     {
-        ss<<buffer[j];
+        packet_stream<<buffer[j];
     }
-    s=ss.str();
+
+    packet_string=packet_stream.str();
+
     cout<<endl<<endl<<"                ICMPV4                 "<<endl;
+    
     ///----------------TYPE, CODE-----------------------
-    cb=s[34];
-    stringstream s1;
-    string s2;
-    s1<<(unsigned int)cb;
-    if((unsigned int)cb==3||(unsigned int)cb==5||(unsigned int)cb==11)
+    current_byte=packet_string[34];
+
+    stringstream type_code_stream;
+    string type_code_string;
+
+    type_code_stream<<(unsigned int)current_byte;
+
+    if((unsigned int)current_byte==3||(unsigned int)current_byte==5||(unsigned int)current_byte==11)
     {
-        cb=s[35];
-        s1<<"-"<<(unsigned int)cb;
+        current_byte=packet_string[35];
+        type_code_stream<<"-"<<(unsigned int)current_byte;
     }else{
-        s1<<"-0";
+        type_code_stream<<"-0";
     }
-    s2=s1.str();
-    ident=verificarIcmp4(s2);
+
+    type_code_string=type_code_stream.str();
+    icmp_identifier=verificarIcmp4(type_code_string);
+
     ///---------------Checksum----------------------------
-    stringstream ss1;
-    cb=s[36];
-    ss1<<hex<<setw(2)<<setfill('0')<<(unsigned int)cb;
-    cb=s[37];
-    ss1<<hex<<setw(2)<<setfill('0')<<(unsigned int)cb;
-    s2="0x"+ss1.str();
-    cout<<endl<<"Header Checksum: "<<s2;
-    if(ident==0||ident==8)
+    stringstream checksum_stream;
+
+    current_byte=packet_string[36];
+    checksum_stream<<hex<<setw(2)<<setfill('0')<<(unsigned int)current_byte;
+    
+    current_byte=packet_string[37];
+    checksum_stream<<hex<<setw(2)<<setfill('0')<<(unsigned int)current_byte;
+    
+    type_code_string="0x"+checksum_stream.str();
+    cout<<endl<<"Header Checksum: "<<type_code_string;
+    
+    if(icmp_identifier==0||icmp_identifier==8)
     {
         ///--------------Identificador-------------------------
         long int n;
-        stringstream z;
-        cb=s[38];
-        bin=chartobin(cb);
-        z<<bin;
-        cb=s[39];
-        bin=chartobin(cb);
-        z<<bin;
-        s2=z.str();
-        n=strtoull(s2.c_str(), &cc, 2);
+        stringstream identifier_stream;
+        
+        current_byte=packet_string[38];
+        bin=chartobin(current_byte);
+        identifier_stream<<bin;
+        
+        current_byte=packet_string[39];
+        bin=chartobin(current_byte);
+        identifier_stream<<bin;
+        
+        type_code_string=identifier_stream.str();
+        n=strtoull(type_code_string.c_str(), &end_ptr, 2);
+        
         cout<<endl<<"Identificador: "<<n;
+        
         ///--------------Secuencia------------------------------
-        stringstream z1;
-        cb=s[40];
-        bin=chartobin(cb);
-        z1<<bin;
-        cb=s[41];
-        bin=chartobin(cb);
-        z1<<bin;
-        s2=z1.str();
-        n=strtoull(s2.c_str(), &cc, 2);
+        stringstream sequence_stream;
+
+        current_byte=packet_string[40];
+        bin=chartobin(current_byte);
+        sequence_stream<<bin;
+
+        current_byte=packet_string[41];
+        bin=chartobin(current_byte);
+        sequence_stream<<bin;
+
+        type_code_string=sequence_stream.str();
+        n=strtoull(type_code_string.c_str(), &end_ptr, 2);
+
         cout<<endl<<"Numero de Secuencia: "<<n;
+        
         ///------------------Payload-----------------------------
-        cout<<endl<<"Payload Lenght: "<<t-8;
-    }else if(ident==3)
+        cout<<endl<<"Payload Lenght: "<<length-8;
+    }
+    else if(icmp_identifier==3)
     {
-        cout<<endl<<"Payload Lenght: "<<t-4;
-    }else if(ident==5)
+        cout<<endl<<"Payload Lenght: "<<length-4;
+    }
+    else if(icmp_identifier==5)
     {
         ///--------------Gateway---------------------------------
         cout<<endl<<"Gateway: ";
+        
         for(int j=38; j<42; j++)
         {
-            cb=s[j];
-            printf("%d", (unsigned int)cb);
+            current_byte=packet_string[j];
+            printf("%d", (unsigned int)current_byte);
             if(j<41)
             {
                 cout<<".";
             }
         }
+
         ///------------Payload------------------------------------
-        cout<<endl<<"Payload Lenght: "<<t-8;
-    }else if(ident==1)
+        cout<<endl<<"Payload Lenght: "<<length-8;
+    }else if(icmp_identifier==1)
     {
-        cout<<endl<<"Payload Lenght: "<<t-4;
+        cout<<endl<<"Payload Lenght: "<<length-4;
     }
 }
+
 #endif // ICMP_H_INCLUDED

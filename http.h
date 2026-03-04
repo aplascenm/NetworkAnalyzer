@@ -7,38 +7,46 @@ using namespace std;
 
 void http(const struct pcap_pkthdr *header, const u_char *buffer)
 {
-    unsigned char cb;
-    stringstream ss;
-    string s;
+    unsigned char current_byte;
+    stringstream packet_stream;
+    string packet_string;
+
     for(unsigned int j=0; j<header->len; j++)
     {
-            ss<<buffer[j];
+            packet_stream<<buffer[j];
     }
-    s=ss.str();
+
+    packet_string=packet_stream.str();
+
     //
     char *bin;
+    
     cout<<endl<<endl<<"                HTTP                "<<endl;
+    
     //Type
-    string m;
-    stringstream mm;
-    char p;
-    long int pos;
-    pos=74;
-    p=s[pos];
-    while(p!='/r')
+    string http_line;
+    stringstream http_stream;
+    char current_char;
+    long int current_position;
+
+    current_position=74;
+    current_char=packet_string[current_position];
+    
+    while(current_char!='/r')
     {
-        cb=s[pos];
-        if((unsigned int)cb==13)
+        current_byte=packet_string[current_position];
+        if((unsigned int)current_byte==13)
         {
             break;
         }
-        mm<<s[pos];
-        pos++;
-        p=s[pos];
+        http_stream<<packet_string[current_position];
+        current_position++;
+        current_char=packet_string[current_position];
     }
-    m=mm.str();
-    cout<<endl<<"Es un: "<<m;
 
+    http_line=http_stream.str();
+
+    cout<<endl<<"Es un: "<<http_line;
 }
 
 #endif // HTTP_H_INCLUDED

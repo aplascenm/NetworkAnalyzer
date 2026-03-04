@@ -40,27 +40,30 @@ void cast (char *c)
 
 void ethernet(const struct pcap_pkthdr *header, const u_char *buffer)
 {
-    stringstream ss;
-    string s;
+    stringstream packet_stream;
+    string packet_string;
     char *bin;
-    unsigned char cb;
+    unsigned char current_byte;
+    
     for(unsigned int j=0; j<header->len; j++)
     {
-        ss<<buffer[j];
+        packet_stream<<buffer[j];
     }
-    s=ss.str();
+
+    packet_string=packet_stream.str();
 
     //Direcciones MAC:
     cout<<endl;
     cout<<"Direccion Destino: ";
+    
     for(int j=0; j<6; j++)
     {
-        cb=s[j];
+        current_byte=packet_string[j];
         if(j==0)
         {
-            bin=chartobin(cb);
+            bin=chartobin(current_byte);
         }
-        printf("%02x", (int)cb);
+        printf("%02x", (int)current_byte);
         if(j==5)
         {
             cout<<" ->";
@@ -69,17 +72,20 @@ void ethernet(const struct pcap_pkthdr *header, const u_char *buffer)
             cout<<":";
         }
     }
+
     cast(bin);
+
     cout<<endl;
     cout<<"Direccion Origen: ";
+
     for(int j=6; j<12; j++)
     {
-        cb=s[j];
+        current_byte=packet_string[j];
         if(j==6)
         {
-            bin=chartobin(cb);
+            bin=chartobin(current_byte);
         }
-        printf("%02x", (int)cb);
+        printf("%02x", (int)current_byte);
         if(j==11)
         {
             cout<<" ->";
@@ -88,24 +94,32 @@ void ethernet(const struct pcap_pkthdr *header, const u_char *buffer)
             cout<<":";
         }
     }
+
     cast(bin);
+
     //Tipo
-    stringstream z;
-    string s2;
-    cb=s[12];
-    z<<hex<<setw(2)<<setfill('0')<<(int)cb;
-    cb=s[13];
-    z<<hex<<setw(2)<<setfill('0')<<(int)cb;
-    s2="0x"+z.str();
+    stringstream ethertype_stream;
+    string ethertype_string;
+
+    current_byte=packet_string[12];
+    ethertype_stream<<hex<<setw(2)<<setfill('0')<<(int)current_byte;
+    
+    current_byte=packet_string[13];
+    ethertype_stream<<hex<<setw(2)<<setfill('0')<<(int)current_byte;
+    
+    ethertype_string="0x"+ethertype_stream.str();
+
     cout<<endl<<"Tipo: ";
-    verificardE(s2);
+    verificardE(ethertype_string);
+    
     //Carga util
     cout<<endl<<"Hay "<<header->len-14<<" Bytes de carga util.";
+    
     //Carga
     cout<<endl;
     for(int i=0; i<100; i++)
     {
-        if(dEthertype[i]==s2)
+        if(dEthertype[i]==ethertype_string)
         {
             if(dEthertype[i+2]=="ARP")
             {

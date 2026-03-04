@@ -10,56 +10,72 @@
 using namespace std;
 
 
-int versionIhl(char *c)
+int versionIhl(char *bitString)
 {
-    string s;
-    stringstream ss, ss2;
+    string binaryPart;
+    stringstream versionStream, ihlStream;
     int n;
-    char *cc;
+    char *endPointer;
+
     for(int i=0; i<4; i++)
     {
-        ss<<c[i];
+        versionStream<<bitString[i];
     }
-    s=ss.str();
-    n=strtoull(s.c_str(), &cc, 2);
-    cout<<"Version: "<<n<<" ("<<s<<")"<<" -> IPV4";
+
+    binaryPart=versionStream.str();
+    n=strtoull(binaryPart.c_str(), &endPointer, 2);
+
+    cout<<"Version: "<<n<<" ("<<binaryPart<<")"<<" -> IPV4";
+    
     for(int i=4; i<8; i++)
     {
-        ss2<<c[i];
+        ihlStream<<bitString[i];
     }
-    s=ss2.str();
-    n=strtoull(s.c_str(), &cc, 2);
+    
+    binaryPart=ihlStream.str();
+    n=strtoull(binaryPart.c_str(), &endPointer, 2);
+
     cout<<endl<<"IHL: "<<n<<" ("<<n*4<<")";
+
     return n*4;
 }
-void dscpEcn(char *c)
+
+void dscpEcn(char *bitString)
 {
-    string s;
-    stringstream ss, ss2;
+    string binaryPart;
+    stringstream dscpStream;
     int n;
-    char *cc;
+    char *endPointer;
+
     for(int i=0; i<6; i++)
     {
-        ss<<c[i];
+        dscpStream<<bitString[i];
     }
-    s=ss.str();
-    n=strtoull(s.c_str(), &cc, 2);
+
+    binaryPart=dscpStream.str();
+    n=strtoull(binaryPart.c_str(), &endPointer, 2);
+    
     cout<<endl<<"DSCP: "<<n;
-    if(c[6]=='1')
+    
+    if(bitString[6]=='1')
     {
         cout<<endl<<"ECN bit 1: ON";
-    }else
+    }
+    else
     {
         cout<<endl<<"ECN bit 1: OFF";
     }
-    if(c[7]=='1')
+
+    if(bitString[7]=='1')
     {
         cout<<endl<<"ECN bit 2: ON";
-    }else
+    }
+    else
     {
         cout<<endl<<"ECN bit 2: OFF";
     }
 }
+
 void flags (char *c)
 {
     if(c[0]=='1')
@@ -84,26 +100,33 @@ void flags (char *c)
         cout<<endl<<"Dont Fragments: OFF";
     }
 }
-void fragmetsOffset(char *c, char *c2)
+
+void fragmetsOffset(char *firstByteBits, char *secondByteBits)
 {
-    string s;
-    stringstream ss, ss2;
+    string binaryPart;
+    stringstream firstStream, secondStream;
     int n, n2;
-    char *cc;
+    char *endPointer;
+
     for(int i=3; i<8; i++)
     {
-        ss<<c[i];
+        firstStream<<firstByteBits[i];
     }
-    s=ss.str();
-    n=strtoull(s.c_str(), &cc, 2);
+
+    binaryPart=firstStream.str();
+    n=strtoull(binaryPart.c_str(), &endPointer, 2);
+
     for(int i=0; i<8; i++)
     {
-        ss2<<c2[i];
+        secondStream<<secondByteBits[i];
     }
-    s=ss.str();
-    n2=strtoull(s.c_str(), &cc, 2);
+
+    binaryPart=secondStream.str();
+    n2=strtoull(binaryPart.c_str(), &endPointer, 2);
+
     cout<<endl<<"Fragment Offset: "<<n+n2;
 }
+
 void identificar(int n,const struct pcap_pkthdr *header, const u_char *buffer, int t)
 {
     if(n==1)
@@ -120,102 +143,139 @@ void identificar(int n,const struct pcap_pkthdr *header, const u_char *buffer, i
 
 void ipv4(const struct pcap_pkthdr *header, const u_char *buffer)
 {
-    int ihl;
-    stringstream ss;
-    string s;
+    int headerLength;
+    stringstream packetStream;
+    string packetData;
+
     char *bin, *bin2;
-    unsigned char cb;
+    unsigned char currentByte;
+
     for(unsigned int j=0; j<header->len; j++)
     {
-        ss<<buffer[j];
+        packetStream<<buffer[j];
     }
-    s=ss.str();
+
+    packetData=packetStream.str();
 
     cout<<endl<<"                IPV4                 "<<endl;
+    
     ///-------MSB Y LSB----------------
-    cb=s[14];
-    bin=chartobin(cb);
-    ihl=versionIhl(bin);
+    currentByte=packetData[14];
+    bin=chartobin(currentByte);
+    headerLength=versionIhl(bin);
+    
     ///-------DSCP Y ECN---------------
-    cb=s[15];
-    bin=chartobin(cb);
+    currentByte=packetData[15];
+    bin=chartobin(currentByte);
     dscpEcn(bin);
+    
     ///-------Total Lenght-------------
-    long int n,t;
-    stringstream z;
-    string ss2;
-    char *cc;
-    cb=s[16];
-    bin=chartobin(cb);
-    z<<bin;
-    cb=s[17];
-    bin=chartobin(cb);
-    z<<bin;
-    ss2=z.str();
-    n=strtoull(ss2.c_str(), &cc, 2);
-    t=n-20;
-    cout<<endl<<"Total Lenght: "<<n;
+    long int totalLength,payloadLength;
+    stringstream totalLengthStream;
+    string binaryData;
+    char *endPointer;
+
+    currentByte=packetData[16];
+    bin=chartobin(currentByte);
+    totalLengthStream<<bin;
+
+    currentByte=packetData[17];
+    bin=chartobin(currentByte);
+    totalLengthStream<<bin;
+
+    binaryData=totalLengthStream.str();
+    totalLength=strtoull(binaryData.c_str(), &endPointer, 2);
+    
+    payloadLength=totalLength-20;
+    
+    cout<<endl<<"Total Lenght: "<<totalLength;
+    
     ///------Identification------------
-    stringstream z2;
-    cb=s[18];
-    bin=chartobin(cb);
-    z2<<bin;
-    cb=s[19];
-    bin=chartobin(cb);
-    z2<<bin;
-    ss2=z2.str();
-    n=strtoull(ss2.c_str(), &cc, 2);
-    cout<<endl<<"Identification: "<<n;
+    stringstream identificationStream;
+
+    currentByte=packetData[18];
+    bin=chartobin(currentByte);
+    identificationStream<<bin;
+
+    currentByte=packetData[19];
+    bin=chartobin(currentByte);
+    identificationStream<<bin;
+
+    binaryData=identificationStream.str();
+    totalLength=strtoull(binaryData.c_str(), &endPointer, 2);
+    
+    cout<<endl<<"Identification: "<<totalLength;
+   
     ///---------FLAGS-------------------
-    cb=s[20];
-    bin=chartobin(cb);
+    currentByte=packetData[20];
+    bin=chartobin(currentByte);
     flags(bin);
+    
     ///---------Fragment Offset---------
-    bin=chartobin(cb);
-    cb=s[21];
-    bin2=chartobin(cb);
+    bin=chartobin(currentByte);
+    currentByte=packetData[21];
+    
+    bin2=chartobin(currentByte);
     fragmetsOffset(bin, bin2);
+
     ///----------Time To Life-----------
-    cb=s[22];
-    cout<<endl<<"Time to life: "<<(unsigned int)cb;
+    currentByte=packetData[22];
+    cout<<endl<<"Time to life: "<<(unsigned int)currentByte;
+    
     ///---------Protocol----------------
-    int num;
-    stringstream zz2;
-    zz2<<(int)s[23];
-    ss2=zz2.str();
-    num=verificarIPT(ss2);
+    int protocolNumber;
+    stringstream protocolStream;
+
+    protocolStream<<(int)packetData[23];
+    binaryData=protocolStream.str();
+    protocolNumber=verificarIPT(binaryData);
+
     ///--------Header Checksum----------
-    stringstream sss;
-    string sz;
-    cb=s[24];
-    sss<<hex<<setw(2)<<setfill('0')<<(unsigned int)cb;
-    cb=s[25];
-    sss<<hex<<setw(2)<<setfill('0')<<(unsigned int)cb;
-    sz="0x"+sss.str();
-    cout<<endl<<"Header Checksum: "<<sz;
+    stringstream checksumStream;
+    string checksumString;
+
+    currentByte=packetData[24];
+    checksumStream<<hex<<setw(2)<<setfill('0')<<(unsigned int)currentByte;
+    
+    currentByte=packetData[25];
+    checksumStream<<hex<<setw(2)<<setfill('0')<<(unsigned int)currentByte;
+    
+    checksumString="0x"+checksumStream.str();
+    
+    cout<<endl<<"Header Checksum: "<<checksumString;
+    
     ///---------Direccion Origen-----------
     cout<<endl<<"Sender IP: ";
+
     for(int j=26; j<30; j++)
     {
-        cb=s[j];
-        printf("%d", (unsigned int)cb);
+        currentByte=packetData[j];
+
+        printf("%d", (unsigned int)currentByte);
+
         if(j<29)
         {
             cout<<".";
         }
     }
+
     ///---------Direccion Destino----------
     cout<<endl<<"Tarjet IP: ";
+    
     for(int j=30; j<34; j++)
     {
-        cb=s[j];
-        printf("%d", (unsigned int)cb);
+        currentByte=packetData[j];
+        
+        printf("%d", (unsigned int)currentByte);
+        
         if(j<33)
         {
             cout<<".";
         }
     }
+    
     ///-----------Data----------------------
-    identificar(num, header, buffer,t);
+    identificar(protocolNumber, header, buffer,payloadLength);
 }
+
 #endif // IPV4_H_INCLUDED

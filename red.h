@@ -115,4 +115,5 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
 	printf("%s,%.6d len:%d\n", timestr, header->ts.tv_usec, header->len);
     ethernet(header, pkt_data);
 }
+
 #endif // RED_H_INCLUDED
